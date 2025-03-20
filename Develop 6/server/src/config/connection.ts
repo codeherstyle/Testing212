@@ -1,19 +1,15 @@
-import dotenv from 'dotenv';
-dotenv.config();
+import type { Request, Response } from 'express';
+// import question model
+import { IQuestion, Question} from '../models/Question.js';
 
-import mongoose from 'mongoose';
-
-const MONGODB_URI = process.env.MONGODB_URI || '';
-
-const db = async (): Promise<typeof mongoose.connection> => {
+// gets a set of random questions
+export const getRandomQuestions = async (_req: Request, res: Response) => {
   try {
-    await mongoose.connect(MONGODB_URI);
-    console.log('Database connected.');
-    return mongoose.connection;
-  } catch (error) {
-    console.error('Database connection error:', error);
-    throw new Error('Database connection failed.');
+    const questions = await Question.aggregate<IQuestion>([
+      { $sample: { size: 10 } },
+      { $project: { __v: 0 } }]);
+    res.status(200).json(questions);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
   }
 };
-
-export default db;
